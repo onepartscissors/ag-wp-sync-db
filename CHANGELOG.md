@@ -2,6 +2,14 @@
 
 All notable changes to AG WP Sync DB. Versions follow [semver](https://semver.org/).
 
+## [2.1.1] - 2026-11-12
+
+### Fixed
+- A push or pull copied the other site's sync log (`ag_wpsdb_cli_log`) and error log when the receiving site had none yet, with URLs inside rewritten by find and replace. Logs now always stay with the site that wrote them.
+
+### Added
+- MIGRATING.md: how to move a site from WP Sync DB.
+
 ## [2.1.0] - 2026-11-12
 
 ### Added
