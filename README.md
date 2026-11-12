@@ -105,7 +105,7 @@ Instructions for AI agents are in [AGENTS.md](AGENTS.md). Moving a site from WP 
 ## Credits
 
 - Original plugin: [WP Sync DB](https://github.com/wp-sync-db/wp-sync-db) by Sean Lang, based on WP Migrate DB Pro by Delicious Brains.
-- This fork: Ash Glover.
+- This fork: [Ash Glover](https://www.ashglover.co.za).
 
 ## License
 
