@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: WP Sync DB Compatibility
+Plugin Name: WP Sync DB Compatibility (AG WP Sync DB)
 Description: Prevents 3rd party plugins from being loaded during WP Sync DB specific operations
 Author: Sean Lang
 Version: 1.0

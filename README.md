@@ -1,98 +1,88 @@
-# WP Sync DB
+# AG WP Sync DB
 
-WP Sync DB eliminates the manual work of migrating a WP database. Copy your db from one WP install to another with a single-click in your dashboard. Especially handy for syncing a local development database with a live site.
+Push, pull and export WordPress databases between sites from the WordPress dashboard. Find and replace on URLs and file paths happens during the transfer, including inside serialized data.
 
-<p align="center"><img src="https://raw.github.com/slang800/psychic-ninja/master/wp-migrate-db.png"/></p>
+Forked from [wp-sync-db/wp-sync-db](https://github.com/wp-sync-db/wp-sync-db) (version 1.5, last updated 2018).
 
-## Looking for a Maintainer
+## Why this fork exists
 
-I've moved away from PHP & WordPress work and don't have time to maintain this. If you're a talented PHP developer I'd be happy to give you this repo. Grab the latest code from [delicious-brains](https://github.com/wp-sync-db/wp-sync-db/tree/delicious-brains), remove the license checking, branding, & other cruft, and open up a PR to show me your work.
+The original plugin is no longer maintained. Its README asks for a new maintainer. We use it on many sites and needed it to keep working. This fork exists to:
 
-## Description
+1. **Fix the errors.** On current PHP and WordPress versions the original shows notices and deprecation warnings on every admin page, for example:
+   - `Function _load_textdomain_just_in_time was called incorrectly. Translation loading for the wp-sync-db domain was triggered too early` (WordPress 6.7+)
+   - `Creation of dynamic property WPSDB::$checkbox_options is deprecated` (PHP 8.2+)
 
-WP Sync DB exports your database as a MySQL data dump (much like phpMyAdmin), does a find and replace on URLs and file paths, then allows you to save it to your computer, or send it directly to another WordPress instance. It is perfect for developers who develop locally and need to move their WordPress site to a staging or production server.
+   It also contained code that is a fatal error on PHP 8 (`each()`, `mysql_get_server_info()`) in some code paths.
+2. **Improve sync speed where we can.** See "What's faster" below.
+3. **Make minor improvements.** Small security hardening and bug fixes, listed in [CHANGELOG.md](CHANGELOG.md).
 
-### Selective Sync
+How the plugin works has not changed. The screens, settings, migration profiles and the push/pull process are the same.
 
-WP Sync DB lets you choose which DB tables are migrated. Have a huge analytics table you'd rather not send? Simply deselect it and it won't be synced.
+### Why not the Delicious Brains code?
 
-### Bi-directional Sync
+The original README suggests rebuilding from the `delicious-brains` branch. That branch is WP Migrate DB Pro 1.6.1 from 2016. It is not much newer than 1.5. It also uses different option names and a different request format, so existing connections would have to be set up again. Current WP Migrate (2.x) is a full rewrite with push/pull only in the paid version. So this fork builds on wp-sync-db 1.5.
 
-#### Pull: Replace a Local DB with a Remote DB
+## Compatible with WP Sync DB
 
-If you have a test site setup locally but you need the latest data from the production server, just install WP Sync DB on both sites and you can pull the live database down, replacing your local database in just a few clicks.
+AG WP Sync DB keeps the same database option (`wpsdb_settings`) and the same request format as WP Sync DB 1.5. This means:
 
-#### Push: Replace a Remote DB with a Local DB
+- Saved connection keys, migration profiles and settings carry over. Nothing needs to be set up again.
+- A site running AG WP Sync DB can push to and pull from a site still running WP Sync DB 1.5, and the other way round. Sites can be switched over one at a time.
+- Only one of the two can be active on a site. Activating AG WP Sync DB deactivates WP Sync DB and WP Sync DB Media Files automatically. If both end up active anyway, AG WP Sync DB stays off and shows an admin notice.
 
-If you're developing a new feature for a site that's already live, you likely need to tweak your settings locally before deploying. Once you've perfected your configuration on your development machine, it's easy to send the settings to your production server. Just push to the server, replacing your remote database with your local one.
+## What's faster
 
-### Database Export & Backup
+- **Fewer, larger requests.** The default maximum request size goes from 1 MB to 8 MB (capped by the server's `post_max_size`). Sites still on the old 1 MB default are raised once. A custom value set on the Settings tab is not changed.
+- **Find and replace skips values that don't need it.** Before, every text value in the database went through `unserialize()` and `json_decode()`. Now values that don't contain any of the find strings are passed through unchanged.
+- **Faster imports.** Each chunk of SQL is run inside one transaction instead of committing after every statement, and multi-row INSERT statements can be up to 1 MB instead of 50 KB.
+- **Bigger read batches.** Rows are read 1,000 at a time instead of 100. Tables with large rows (post content, page builder data) automatically use smaller batches to limit memory use.
+- **Compressed pull responses.** SQL sent back during a pull is gzip compressed when the requesting site supports it.
+- **Faster media syncs** (with [AG WP Sync DB Media Files](https://github.com/onepartscissors/ag-wp-sync-db-media-files)): working out which files to copy no longer slows down sharply on large media libraries, and files in a pull are downloaded in parallel.
 
-Not only can WP Sync DB pull and push your DB: it can export your DB to an SQL file that you can save and backup wherever you want. No need to ssh into your machine or open up phpMyAdmin.
+Each change can be turned off with a filter if a server has trouble with it:
 
-### Encrypted Transfers
+| Filter | Default | What it controls |
+|---|---|---|
+| `ag_wpsdb_default_max_request` | `8388608` | Default maximum request size in bytes |
+| `ag_wpsdb_use_transactions` | `true` | Run each SQL chunk in a transaction |
+| `ag_wpsdb_compress_responses` | `true` | Gzip pull responses |
+| `wpsdb_max_insert_string_len` | `1048576` | Maximum size of one INSERT statement |
+| `wpsdb_rows_per_segment` | `1000` | Rows read per SELECT |
+| `ag_wpsdb_parallel_media_downloads` | `true` | Parallel media downloads on pull |
 
-All data is sent over SSL to prevent your database from being read during the transfer. WP Sync DB also uses HMAC encryption to sign and verify every request. This ensures that all requests are coming from an authorized server and haven't been tampered with en route.
+## Requirements
 
-### Automatic Find & Replace
-
-When migrating a WordPress site, URLs in the content, widgets, menus, etc need to be updated to the new site's URL. Doing this manually is annoying, time consuming, and very error-prone. WP Sync DB does all of this for you.
-
-### Stress Tested on Massive Sites
-
-Huge database? No prob. WP Sync DB has been tested with tables several GBs in size.
-
-### Detect Limitations Automatically
-
-WP Sync DB checks both the remote and local servers to determine limitations and optimize for performance. For example, we detect the MySQL `max_allowed_packet_size` and adjust how much SQL we execute at a time.
-
-### Sync Media Libraries Between Installations
-
-Using the optional [WP Sync DB Media Files](https://github.com/wp-sync-db/wp-sync-db-media-files) addon, you can have media files synced between installs too.
+- PHP 7.4 or later (tested on PHP 8.x)
+- WordPress 5.6 or later
 
 ## Installation
 
-1. Install [github-updater](https://github.com/afragen/github-updater) by downloading the latest zip [here](https://github.com/afragen/github-updater/releases). We rely on this plugin for updating WP Sync DB directly from this git repo.
-2. Install WP Sync DB by downloading the latest zip [here](https://github.com/wp-sync-db/wp-sync-db/releases). Both github-updater and WP Sync DB will now download their own updates automatically, so you will never need to go through that tedious zip downloading again.
-3. Access the WP Sync DB menu option under Tools.
-4. Install the optional [WP Sync DB Media Files](https://github.com/wp-sync-db/wp-sync-db-media-files) addon.
+As a git submodule (how we install it):
 
-## Help Videos
+```
+git submodule add https://github.com/onepartscissors/ag-wp-sync-db.git web/wp-content/plugins/ag-wp-sync-db
+git submodule add https://github.com/onepartscissors/ag-wp-sync-db-media-files.git web/wp-content/plugins/ag-wp-sync-db-media-files
+```
 
-### Feature Walkthrough
+Then activate AG WP Sync DB first, then AG WP Sync DB Media Files. With WP-CLI:
 
-<https://www.youtube.com/watch?v=u7jFkwwfeJc>
+```
+wp plugin activate ag-wp-sync-db ag-wp-sync-db-media-files
+```
 
-A brief walkthrough of the WP Sync DB plugin showing all of the different options and explaining them.
+The plugin is under Tools > Migrate DB (Network Admin > Settings > Migrate DB on multisite).
 
-### Pulling Live Data Into Your Local Development Environment
+## Usage
 
-<http://www.youtube.com/watch?v=IFdHIpf6jjc>
+1. On the remote site, open Tools > Migrate DB > Settings, tick "Accept pull requests" and/or "Accept push requests", and copy the connection info.
+2. On the local site, open Tools > Migrate DB, choose Pull or Push, and paste the connection info.
+3. Check the find and replace values and the table selection, then click Migrate DB.
 
-This screencast demonstrates how you can pull data from a remote, live WordPress install and update the data in your local development environment.
+## Credits
 
-### Pushing Local Development Data to a Staging Environment
+- Original plugin: [WP Sync DB](https://github.com/wp-sync-db/wp-sync-db) by Sean Lang, based on WP Migrate DB Pro by Delicious Brains.
+- This fork: Ash Glover.
 
-<http://www.youtube.com/watch?v=FjTzNqAlQE0>
+## License
 
-This screencast demonstrates how you can push a local WordPress database you've been using for development to a staging environment.
-
-### Media Files Addon Demo
-
-<http://www.youtube.com/watch?v=0aR8-jC2XXM>
-
-A short demo of how the [Media Files addon](https://github.com/wp-sync-db/wp-sync-db-media-files) allows you to sync up your WordPress Media Libraries.
-
-## Similar Tools
-
-- [Interconnect IT's Search & Replace](https://github.com/interconnectit/Search-Replace-DB)
-
-## Isn't this the same as WP Migrate DB Pro?
-
-No, of course not, don't be silly. I took out the license verification code, a really shady looking PressTrends reporter, and the tab for installing the Media Files addon before I published 1.4. Release 1.3 was the same as [WP Migrate DB Pro](https://deliciousbrains.com/wp-migrate-db-pro), but I've made several improvements since then.
-
-## Is this Illegal?
-
-**No.** Just because this is based on the paid-for WP Migrate DB Pro, it doesn't mean I can't release it. WP Migrate DB Pro is released under GPLv2, a copyleft license that guarantees my freedom (and the freedom of all users) to copy, distribute, and/or modify this software.
-
-I _was_ forced to rename it from "WP Migrate DB" to "WP Sync DB" after Delicious Brains decided to trademark the name "WP Migrate DB", [filed a DMCA takedown](http://wptavern.com/dmca-takedown-notice-issued-against-fork-of-wp-migrate-db-pro) against the repo, and threatened to take me to court. But they should be OK with it now.
+GPL v2 or later. See [LICENSE](LICENSE).

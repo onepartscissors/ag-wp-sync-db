@@ -1,14 +1,12 @@
 {
-  "name": "wp-sync-db/wp-sync-db",
+  "name": "onepartscissors/ag-wp-sync-db",
   "type": "wordpress-plugin",
-  "homepage": "https://github.com/wp-sync-db/wp-sync-db",
-  "license": "GPL-2.0",
-  "description": "WP Sync DB eliminates the manual work of migrating a WP database.",
-  "keywords": ["plugin","wordpress","wp-sync-db","db"],
+  "homepage": "https://github.com/onepartscissors/ag-wp-sync-db",
+  "license": "GPL-2.0-or-later",
+  "description": "Push, pull and export WordPress databases. Fork of WP Sync DB with PHP 8 fixes and faster syncs.",
+  "keywords": ["plugin", "wordpress", "wp-sync-db", "db", "migration"],
   "require": {
-    "composer/installers": "~1.0.6"
-  },
-  "scripts": {
-    "test": "./test.sh"
+    "php": ">=7.4",
+    "composer/installers": "^1.0 || ^2.0"
   }
 }
