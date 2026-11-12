@@ -2,6 +2,11 @@
 
 All notable changes to AG WP Sync DB. Versions follow [semver](https://semver.org/).
 
+## [2.1.2] - 2026-11-12
+
+### Changed
+- AGENTS.md: testing instructions no longer name a specific site or server.
+
 ## [2.1.1] - 2026-11-12
 
 ### Fixed

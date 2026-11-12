@@ -62,6 +62,5 @@ Use a local WordPress site (for example ddev) and a remote development site, bot
 2. Admin screen: pull from dev, push to dev (with backup and media), export to file.
 3. CLI: `ddev wp agsdb check dev`, `pull dev --media --backup --yes`, `push dev --media --yes`, `export`, and a failure case (bad profile).
 4. Check the PHP logs (`ddev logs -s web`) for warnings from `ag-wp-sync-db`.
-5. Never push to a live site while testing. Back up the dev database first (`wp db export`).
 
 Before replacing a database, back it up. After testing, delete any backup files left in `wp-content/uploads/wp-sync-db/`.
