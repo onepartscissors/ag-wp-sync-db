@@ -5,7 +5,7 @@ Plugin URI: https://github.com/onepartscissors/ag-wp-sync-db
 Description: Export, push, and pull to migrate your WordPress databases. Fork of WP Sync DB with PHP 8 and WordPress 6.7+ fixes and faster syncs.
 Author: Ash Glover
 Author URI: https://www.ashglover.co.za
-Version: 2.0.0
+Version: 2.0.1
 Requires at least: 5.6
 Requires PHP: 7.4
 License: GPL-2.0-or-later
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'AG_WPSDB_VERSION', '2.0.0' );
+define( 'AG_WPSDB_VERSION', '2.0.1' );
 
 // Protocol version reported to remote sites. Kept at 1.5 so ag-wp-sync-db and wp-sync-db 1.5 can sync with each other.
 define( 'AG_WPSDB_PROTOCOL_VERSION', '1.5' );

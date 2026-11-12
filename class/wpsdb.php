@@ -303,7 +303,8 @@ class WPSDB extends WPSDB_Base {
 
 	function get_sql_dump_info( $migration_type, $info_type ) {
 		if( empty( $this->session_salt ) ) {
-			$this->session_salt = strtolower( wp_generate_password( 5, false, false ) );
+			// Long random part so export and backup files in uploads can't be guessed (nginx ignores the .htaccess deny file).
+			$this->session_salt = strtolower( wp_generate_password( 32, false, false ) );
 		}
 		$datetime = date('YmdHis');
 		$ds = ( $info_type == 'path' ? DS : '/' );
@@ -2364,7 +2365,8 @@ class WPSDB extends WPSDB_Base {
 		$diskfile = $this->get_upload_info( 'path' ) . DS . $dump_name;
 		$filename = basename( $diskfile );
 		$last_dash = strrpos( $filename, '-' );
-		$salt = substr( $filename, $last_dash, 6 );
+		$salt_end = strpos( $filename, '.', $last_dash );
+		$salt = substr( $filename, $last_dash, ( false === $salt_end ? strlen( $filename ) : $salt_end ) - $last_dash );
 		$filename_no_salt = str_replace( $salt, '', $filename );
 
 		if ( file_exists( $diskfile ) ) {

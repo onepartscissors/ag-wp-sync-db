@@ -2,6 +2,14 @@
 
 All notable changes to AG WP Sync DB. Versions follow [semver](https://semver.org/).
 
+## [2.0.1] - 2026-11-12
+
+### Fixed
+- False "Media Files addon is out-of-date" notice when AG WP Sync DB Media Files is active.
+
+### Security
+- Export and backup files in `uploads/wp-sync-db/` now use a 32-character random part in the file name instead of 5. On nginx servers the `.htaccess` deny file has no effect, so these files were reachable by URL if the name could be guessed.
+
 ## [2.0.0] - 2026-11-12
 
 First release of the fork, based on [wp-sync-db](https://github.com/wp-sync-db/wp-sync-db) 1.5.
