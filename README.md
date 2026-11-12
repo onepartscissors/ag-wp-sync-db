@@ -100,7 +100,7 @@ wp agsdb log                              # recent command-line syncs
 - `--agent=<name>` records who ran the sync in `wp agsdb log`.
 - Set `AG_WPSDB_NOTIFY_URL` in `wp-config.php` to have each command-line sync result posted there as JSON.
 
-Instructions for AI agents are in [AGENTS.md](AGENTS.md).
+Instructions for AI agents are in [AGENTS.md](AGENTS.md). Moving a site from WP Sync DB: see [MIGRATING.md](MIGRATING.md).
 
 ## Credits
 
