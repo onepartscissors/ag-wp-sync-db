@@ -78,6 +78,19 @@ class WPSDB extends WPSDB_Base {
 			}
 		}
 
+		// 2.1.0: stop autoloading the error log on every page load and trim it.
+		if ( empty( $this->settings['ag_error_log_upgraded'] ) ) {
+			$log = get_option( 'wpsdb_error_log' );
+			if ( false !== $log ) {
+				update_option( 'wpsdb_error_log', substr( (string) $log, -102400 ), false );
+				if ( function_exists( 'wp_set_option_autoload' ) ) {
+					wp_set_option_autoload( 'wpsdb_error_log', false );
+				}
+			}
+			$this->settings['ag_error_log_upgraded'] = 1;
+			update_option( 'wpsdb_settings', $this->settings );
+		}
+
 		add_filter( 'plugin_action_links_' . $this->plugin_basename, array( $this, 'plugin_action_links' ) );
 		add_filter( 'network_admin_plugin_action_links_' . $this->plugin_basename, array( $this, 'plugin_action_links' ) );
 
@@ -559,7 +572,7 @@ class WPSDB extends WPSDB_Base {
 
 		$sql = "SET FOREIGN_KEY_CHECKS=0;\n";
 
-		$preserved_options = array( 'wpsdb_settings', 'wpsdb_error_log' );
+		$preserved_options = array( 'wpsdb_settings', 'wpsdb_error_log', 'ag_wpsdb_cli_log' );
 
 		$this->form_data = $this->parse_migration_form_data( $_POST['form_data'] );
 		if( isset( $this->form_data['keep_active_plugins'] ) ) {
@@ -750,7 +763,7 @@ class WPSDB extends WPSDB_Base {
 				$this->fp = $this->open( $sql_dump_file_name );
 			}
 			$result = $this->export_table( $_POST['table'] );
-			if ( $_POST['intent'] == 'savefile' ) {
+			if ( $_POST['intent'] == 'savefile' && isset( $this->fp ) ) {
 				$this->close( $this->fp );
 			}
 			ob_start();
@@ -949,7 +962,7 @@ class WPSDB extends WPSDB_Base {
 				return $result;
 			}
 
-			$return = @unserialize( trim( $response ) );
+			$return = @unserialize( trim( $response ), array( 'allowed_classes' => false ) );
 
 			if ( false === $return ) {
 				$error_msg = __( 'Failed attempting to unserialize the response from the remote server. Please contact support.', 'ag-wp-sync-db' );
@@ -1114,7 +1127,7 @@ class WPSDB extends WPSDB_Base {
 			return $result;
 		}
 
-		$response = unserialize( trim( $response ) );
+		$response = unserialize( trim( $response ), array( 'allowed_classes' => false ) );
 
 		if ( false === $response ) {
 			$error_msg = __( 'Failed attempting to unserialize the response from the remote server. Please contact support.', 'ag-wp-sync-db' );
@@ -1716,7 +1729,7 @@ class WPSDB extends WPSDB_Base {
 		if( ! empty( $_POST['primary_keys'] ) ) {
 			$_POST['primary_keys'] = trim( $_POST['primary_keys'] );
 			if( ! empty( $_POST['primary_keys'] ) && is_serialized( $_POST['primary_keys'] ) ) {
-				$this->primary_keys = unserialize( stripslashes( $_POST['primary_keys'] ) );
+				$this->primary_keys = unserialize( stripslashes( $_POST['primary_keys'] ), array( 'allowed_classes' => false ) );
 				$first_select = false;
 			}
 		}
@@ -2126,12 +2139,15 @@ class WPSDB extends WPSDB_Base {
 	}
 
 	function close( $fp ) {
+		if ( empty( $fp ) ) return;
 		if ( $this->gzip() && isset( $this->form_data['gzip_file'] ) ) gzclose( $fp );
 		else fclose( $fp );
 		unset( $this->fp );
 	}
 
 	function stow( $query_line, $replace = true ) {
+		// gzwrite() returns 0 for an empty string, which was reported as a write failure.
+		if ( '' === (string) $query_line ) return true;
 		$this->current_chunk .= $query_line;
 		if ( $this->form_data['action'] == 'savefile' || $_POST['stage'] == 'backup' ) {
 			if ( $this->gzip() && isset( $this->form_data['gzip_file'] ) ) {

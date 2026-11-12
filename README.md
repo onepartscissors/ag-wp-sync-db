@@ -49,6 +49,8 @@ Each change can be turned off with a filter if a server has trouble with it:
 | `wpsdb_max_insert_string_len` | `1048576` | Maximum size of one INSERT statement |
 | `wpsdb_rows_per_segment` | `1000` | Rows read per SELECT |
 | `ag_wpsdb_parallel_media_downloads` | `true` | Parallel media downloads on pull |
+| `ag_wpsdb_allow_http_fallback` | `false` | Retry over plain http when https fails (or define `AG_WPSDB_ALLOW_HTTP_FALLBACK`) |
+| `ag_wpsdb_is_live_url` | | Decide whether a URL counts as production for `--allow-live` |
 
 ## Requirements
 
@@ -77,6 +79,28 @@ The plugin is under Tools > Migrate DB (Network Admin > Settings > Migrate DB on
 1. On the remote site, open Tools > Migrate DB > Settings, tick "Accept pull requests" and/or "Accept push requests", and copy the connection info.
 2. On the local site, open Tools > Migrate DB, choose Pull or Push, and paste the connection info.
 3. Check the find and replace values and the table selection, then click Migrate DB.
+
+## Command line and agents
+
+Syncs can be run with WP-CLI, which also lets scripts, Jenkins and AI agents run them. Run `wp help agsdb` for the full reference.
+
+```
+wp agsdb profiles                         # list saved profiles
+wp agsdb check dev                        # connect and report, changes nothing
+wp agsdb pull dev --media --yes           # replace this site's database (and media) with the remote one
+wp agsdb push dev --media --yes           # replace the remote database; backs it up first
+wp agsdb export --find=//old.test --replace=//new.example --output=site.sql.gz
+wp agsdb log                              # recent command-line syncs
+```
+
+- Profiles are the ones saved under Tools > Migrate DB, picked by number, name or part of the remote URL.
+- Nothing changes without `--yes`. Without it, pull and push only check the connection.
+- Overwriting a database on a site that looks like production needs `--allow-live`.
+- `--format=json` prints one result object and exits with code 1 on errors.
+- `--agent=<name>` records who ran the sync in `wp agsdb log`.
+- Set `AG_WPSDB_NOTIFY_URL` in `wp-config.php` to have each command-line sync result posted there as JSON.
+
+Instructions for AI agents are in [AGENTS.md](AGENTS.md).
 
 ## Credits
 

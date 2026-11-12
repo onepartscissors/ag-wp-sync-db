@@ -86,7 +86,7 @@ class WPSDB_Base {
 	function remote_post( $url, $data, $scope, $args = array(), $expecting_serial = false ) {
 		$this->set_time_limit();
 
-		if( function_exists( 'fsockopen' ) && strpos( $url, 'https://' ) === 0 && $scope == 'ajax_verify_connection_to_remote_site' ) {
+		if( function_exists( 'fsockopen' ) && strpos( $url, 'https://' ) === 0 && $scope == 'ajax_verify_connection_to_remote_site' && $this->allow_http_fallback() ) {
 			$url_parts = parse_url( $url );
 			$host = $url_parts['host'];
 			if( $pf = @fsockopen( $host, 443, $err, $err_string, 1 ) ) {
@@ -125,7 +125,7 @@ class WPSDB_Base {
 		}
 
 		if ( is_wp_error( $response ) ) {
-			if( strpos( $url, 'https://' ) === 0 && $scope == 'ajax_verify_connection_to_remote_site' ) {
+			if( strpos( $url, 'https://' ) === 0 && $scope == 'ajax_verify_connection_to_remote_site' && $this->allow_http_fallback() ) {
 				return $this->retry_remote_post( $url, $data, $scope, $args, $expecting_serial );
 			}
 			else if( isset( $response->errors['http_request_failed'][0] ) && strstr( $response->errors['http_request_failed'][0], 'timed out' ) ) {
@@ -152,7 +152,7 @@ class WPSDB_Base {
 			return false;
 		}
 		elseif ( (int) $response['response']['code'] < 200 || (int) $response['response']['code'] > 399 ) {
-			if( strpos( $url, 'https://' ) === 0 && $scope == 'ajax_verify_connection_to_remote_site' ) {
+			if( strpos( $url, 'https://' ) === 0 && $scope == 'ajax_verify_connection_to_remote_site' && $this->allow_http_fallback() ) {
 				return $this->retry_remote_post( $url, $data, $scope, $args, $expecting_serial );
 			}
 			else if( $response['response']['code'] == '401' ) {
@@ -167,7 +167,7 @@ class WPSDB_Base {
 			}
 		}
 		elseif ( $expecting_serial && is_serialized( $response['body'] ) == false ) {
-			if( strpos( $url, 'https://' ) === 0 && $scope == 'ajax_verify_connection_to_remote_site' ) {
+			if( strpos( $url, 'https://' ) === 0 && $scope == 'ajax_verify_connection_to_remote_site' && $this->allow_http_fallback() ) {
 				return $this->retry_remote_post( $url, $data, $scope, $args, $expecting_serial );
 			}
 			$this->error = __( 'There was a problem with the AJAX request, we were expecting a serialized response, instead we received:<br />', 'ag-wp-sync-db' ) . htmlentities( $response['body'] );
@@ -175,7 +175,7 @@ class WPSDB_Base {
 			return false;
 		}
 		elseif ( $response['body'] === '0' ) {
-			if( strpos( $url, 'https://' ) === 0 && $scope == 'ajax_verify_connection_to_remote_site' ) {
+			if( strpos( $url, 'https://' ) === 0 && $scope == 'ajax_verify_connection_to_remote_site' && $this->allow_http_fallback() ) {
 				return $this->retry_remote_post( $url, $data, $scope, $args, $expecting_serial );
 			}
 			$this->error = sprintf( __( 'WP Sync DB does not seem to be installed or active on the remote site. (#131 - scope: %s)', 'ag-wp-sync-db' ), $scope );
@@ -183,13 +183,21 @@ class WPSDB_Base {
 			return false;
 		}
 		elseif ( $expecting_serial && is_serialized( $response['body'] ) == true && $scope == 'ajax_verify_connection_to_remote_site' ) {
-			$unserialized_response = unserialize( $response['body'] );
-			if ( isset( $unserialized_response['error'] ) && '1' == $unserialized_response['error'] && strpos( $url, 'https://' ) === 0 ) {
+			$unserialized_response = unserialize( $response['body'], array( 'allowed_classes' => false ) );
+			if ( isset( $unserialized_response['error'] ) && '1' == $unserialized_response['error'] && strpos( $url, 'https://' ) === 0 && $this->allow_http_fallback() ) {
 				return $this->retry_remote_post( $url, $data, $scope, $args, $expecting_serial );
 			}
 		}
 
 		return $response['body'];
+	}
+
+	/**
+	 * The original plugin silently retried over plain http when an https connection check failed,
+	 * after which the whole database could be sent unencrypted. Off unless explicitly allowed.
+	 */
+	function allow_http_fallback() {
+		return (bool) apply_filters( 'ag_wpsdb_allow_http_fallback', defined( 'AG_WPSDB_ALLOW_HTTP_FALLBACK' ) && AG_WPSDB_ALLOW_HTTP_FALLBACK );
 	}
 
 	function retry_remote_post( $url, $data, $scope, $args = array(), $expecting_serial = false ) {
@@ -260,14 +268,17 @@ class WPSDB_Base {
 		if( $additional_error_var !== false ){
 			$error .= print_r( $additional_error_var, true ) . "\n\n";
 		}
-		$log = get_option( 'wpsdb_error_log' );
-		if( $log ) {
-			$log = $log . $error;
+		$log = (string) get_option( 'wpsdb_error_log' ) . $error;
+		// Keep the newest 100 KB only, and don't autoload it on every page load.
+		$max = (int) apply_filters( 'ag_wpsdb_error_log_max_bytes', 102400 );
+		if ( strlen( $log ) > $max ) {
+			$log = substr( $log, -$max );
 		}
-		else {
-			$log = $error;
-		}
-		update_option( 'wpsdb_error_log', $log );
+		update_option( 'wpsdb_error_log', $log, false );
+	}
+
+	function get_error() {
+		return $this->error;
 	}
 
 	function display_errors() {

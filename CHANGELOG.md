@@ -2,6 +2,28 @@
 
 All notable changes to AG WP Sync DB. Versions follow [semver](https://semver.org/).
 
+## [2.1.0] - 2026-11-12
+
+### Added
+- WP-CLI command `wp agsdb` with `profiles`, `check`, `pull`, `push`, `export` and `log` subcommands, so syncs can be run from scripts, Jenkins and AI agents. Built on the flow of the original wp-sync-db-cli addon.
+  - Pull and push only run with `--yes`. Without it they do a dry run.
+  - Overwriting a database on a site that looks like production needs `--allow-live`.
+  - `--format=json` output with exit code 1 on errors.
+  - Connection errors during a table transfer are retried twice.
+  - One command-line sync per site at a time (file lock).
+  - Each run is logged in the `ag_wpsdb_cli_log` option (kept across pulls) and can be posted to `AG_WPSDB_NOTIFY_URL`.
+  - `export` writes to `--output` (default: current folder), not the public uploads folder.
+- AGENTS.md with instructions for AI agents, and CLAUDE.md pointing to it.
+
+### Security
+- No more silent retry over plain http when an https connection check fails. Before, the whole migration could then run unencrypted. Can be turned back on with the `ag_wpsdb_allow_http_fallback` filter or `AG_WPSDB_ALLOW_HTTP_FALLBACK`.
+- Data received from the other site is unserialized with `allowed_classes => false`.
+
+### Fixed
+- The error log (`wpsdb_error_log`) grew without limit and was loaded on every page. It is now capped at 100 KB and no longer autoloaded (existing logs are trimmed once).
+- Writing an empty string to a gzip export was reported as a write failure (hidden in the admin screen).
+- `close()` on an already closed export file (hidden in the admin screen).
+
 ## [2.0.1] - 2026-11-12
 
 ### Fixed
