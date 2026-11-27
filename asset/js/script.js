@@ -300,20 +300,6 @@ var execute_next_step;
     var push_select_backup = $('#select-backup').clone();
     var pull_select_backup = $('#select-backup').clone();
 
-    $('.help-tab .video').each(function() {
-      var $container = $(this),
-        $viewer = $('.video-viewer');
-
-      $('a', this).click(function(e) {
-        e.preventDefault();
-
-        $viewer.attr('src', '//www.youtube.com/embed/' + $container.data(
-          'video-id') + '?autoplay=1');
-        $viewer.show();
-        var offset = $viewer.offset();
-        $(window).scrollTop(offset.top - 50);
-      });
-    });
 
     $('.backup-options').show();
     $('.keep-active-plugins').show();

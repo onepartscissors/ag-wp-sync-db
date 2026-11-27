@@ -724,73 +724,26 @@
 .wpsdb .help-tab .support .ajax-spinner {
   top: 2px;
 }
-.wpsdb .help-tab .video-viewer {
+.wpsdb .help-tab .guide {
+  max-width: 760px;
   margin-bottom: 30px;
 }
-.wpsdb .help-tab .videos {
-  width: 640px;
+.wpsdb .help-tab .guide h4 {
+  margin: 1.6em 0 0.5em;
 }
-.wpsdb .help-tab .videos ul > li {
-  margin-bottom: 30px;
-  overflow: hidden;
-  position: relative;
+.wpsdb .help-tab .guide ol, .wpsdb .help-tab .guide ul {
+  margin-left: 2em;
 }
-.wpsdb .help-tab .videos ul > li a {
-  overflow: hidden;
-  display: block;
-  width: 320px;
-  height: 180px;
-  float: left;
-  margin-right: 15px;
-  position: relative;
-  z-index: 1;
+.wpsdb .help-tab .guide ul {
+  list-style: disc;
 }
-.wpsdb .help-tab .videos ul > li a:before, .wpsdb .help-tab .videos ul > li a:after {
-  position: absolute;
-  content: " ";
-  margin: auto;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
+.wpsdb .help-tab .guide li {
+  margin-bottom: 0.4em;
 }
-.wpsdb .help-tab .videos ul > li a:before {
-  width: 64px;
-  height: 64px;
-  -webkit-border-radius: 64px;
-  -moz-border-radius: 64px;
-  -ms-border-radius: 64px;
-  -o-border-radius: 64px;
-  border-radius: 64px;
-  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=80);
-  opacity: 0.8;
-  border: 1px solid #ddd;
-  background-color: #fff;
-  z-index: 2;
-}
-.wpsdb .help-tab .videos ul > li a:after {
-  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=80);
-  opacity: 0.8;
-  border: 21.33333px solid transparent;
-  border-top-width: 12.8px;
-  border-bottom-width: 12.8px;
-  border-left-color: #333;
-  background: transparent;
-  display: block;
-  left: 25px;
-  width: 0px;
-  height: 0px;
-  z-index: 3;
-}
-.wpsdb .help-tab .videos .video:last-child {
-  margin-bottom: 0px;
-}
-.wpsdb .help-tab .videos img {
-  width: 320px;
-  height: 240px;
-  position: relative;
-  top: 50%;
-  margin-top: -120px;
+.wpsdb .help-tab .guide pre {
+  background: #f6f7f7;
+  padding: 10px 12px;
+  overflow-x: auto;
 }
 .wpsdb .help-tab .debug {
   width: 640px;
@@ -1198,7 +1151,7 @@ body.mp6 .wpsdb .help-tab .support p, body.mp6 .wpsdb .help-tab .support .email 
 body.mp6 .wpsdb .help-tab div.warning p {
   font-size: 13px;
 }
-body.mp6 .wpsdb .help-tab .videos h4, body.mp6 .wpsdb .help-tab .videos p {
+body.mp6 .wpsdb .help-tab .guide p, body.mp6 .wpsdb .help-tab .guide li {
   font-size: 14px;
 }
 body.mp6 .wpsdb .inline-message, body.mp6 .wpsdb .notification-message {

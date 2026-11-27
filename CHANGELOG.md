@@ -2,6 +2,11 @@
 
 All notable changes to AG WP Sync DB. Versions follow [semver](https://semver.org/).
 
+## [2.2.0] - 2026-11-27
+
+### Changed
+- Help tab: the four YouTube videos (no longer viewable) are replaced by a written step-by-step guide covering setup, pull, push, export, saved profiles, WP-CLI, after-sync cleanup and common errors.
+
 ## [2.1.2] - 2026-11-12
 
 ### Changed
